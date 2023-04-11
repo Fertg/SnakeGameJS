@@ -13,10 +13,11 @@ let food=null;
 let dx = 0;
 let dy = 0;
 
+let lastAxis;
 
 
 
-setInterval(main,500); //se llama 1 vez por segundo
+setInterval(main,100); //se llama 1 vez por segundo
 
 
 
@@ -27,7 +28,11 @@ function main(){
 
 
 function update(){
-
+    const collisionDetected = checkSnakeColision();
+    if(collisionDetected){
+        gameOver();
+        return
+    }
 
     let prevX,prevY;
     //salvar la posicion del ultimo posicion de la serpietne
@@ -50,6 +55,11 @@ function update(){
     //actualiza cabeza de la serpiente
     head.x+=dx;
     head.y+=dy;
+    if(dx!==0){
+        lastAxis= 'X';
+    }else if(dy!==0){
+        lastAxis='Y'
+    }
     //detecta si la serpiente ha consumido comida
     if(food && head.x===food.x && head.y===food.y){
         food=null;
@@ -57,7 +67,7 @@ function update(){
     }
     //crea comida si no hay
     if(!food){       
-        food = {x:getRandomX(),y:getRandomY()};      
+        food = randomFoodPosition();      
     }
 };
 
@@ -89,33 +99,88 @@ function increaseSnakeSize(prevX,prevy){
     );
 }
 
+function checkSnakeColision(){
+    for (let i=0; i<body.length ;++i){
+        if(head.x ==body[i].x && head.y ==body[i].y){
+           return true;
+        }
 
+    }
+    //verificar que la serpiente no se salga
+    const topCollision= (head.y < 0);
+    const bottomCollision=(head.y > 440);
+    const leftCollision= (head.x < 0);
+    const rightCollision=(head.x > 460);
+    if(topCollision || bottomCollision ||leftCollision || rightCollision ){
+        return true;
+    }
+    return false;
+}
+function gameOver(){
+    alert('Has perdido');
+    head.x=0;
+    head.y=0;
+    dy=0;
+    dx=0;
+    body.length=0;
+}
 
 document.addEventListener('keydown',moverSnake);
 
-function moverSnake(event){
 
+function checkFoodCollision(position){
+    //comparar las coordenadas del alimento generado con el cuerpo de la serpiente
+    for (let i=0; i<body.length ;++i){
+        if(position.x == body[i].x && position.y == body[i].y){
+           return true;
+        }
+    }
+    // compara las coordenadas del alimento generado con las cabeza de la serpiente
+    if(position.x == head.x && position.y == head.y){
+        return true;
+     }
+     return false;
+}
+
+function randomFoodPosition(){
+    let position;
+    do { 
+      position= {x:getRandomX(),y:getRandomY()};
+     }while(checkFoodCollision(position));
+        return position;
+  }
+
+function moverSnake(event){
+  
 switch(event.key){
     case'ArrowUp':
-        console.log('Mover hacia arriba');
+       
+        if(lastAxis!=='Y'){    
+        console.log('Mover hacia arriba');   
         dx=0;
         dy=-SIZE;
+    }
         break;
-    case'ArrowDown':
+    case'ArrowDown':          
+        if(lastAxis!=='Y'){  
         console.log('Mover hacia abajo');   
         dx=0;
         dy=+SIZE;
+    }
         break;
     case'ArrowRight':
+    if(lastAxis!=='X'){  
         console.log('Mover hacia derecha');  
         dx=+SIZE;
         dy=0;
-
+    }
         break;  
     case'ArrowLeft':
+    if(lastAxis!=='X'){  
         console.log('Mover hacia izquierda');   
         dx=-SIZE;
         dy=0;
+    }    
         break; 
 
 }
